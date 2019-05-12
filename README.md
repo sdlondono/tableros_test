@@ -2,7 +2,7 @@
 
 This project is a test in Django with React
 
-## Web of the web
+## Url of the web
 https://task-useit.herokuapp.com
 
 ## User Test

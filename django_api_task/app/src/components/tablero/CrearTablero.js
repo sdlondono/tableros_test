@@ -7,7 +7,7 @@ import axios from 'axios';
 
 import 'babel-core/register';
 import 'babel-polyfill';
-
+let ideas = []
 export class CrearTablero extends Component {
 
 
@@ -32,14 +32,23 @@ export class CrearTablero extends Component {
 
         setTimeout(() => {
             this.props.tablero.map((e) => {
+                ideas = []
                 this.onIdea(e.id)
             })
         }, 2000);
 
     }
 
+    onLoadIdeas(){
 
+        ideas = []
 
+        this.props.tablero.map((e) => {
+            this.onIdea(e.id)
+        })
+
+    }
+    
     onChange = e => this.setState({ [e.target.name]: e.target.value })
 
     onSubmit = async e => {
@@ -61,8 +70,6 @@ export class CrearTablero extends Component {
         }, 1000);
 
     }
-
-
 
     onModal = () => {
         return (
@@ -110,13 +117,22 @@ export class CrearTablero extends Component {
             </div>
         )
     }
-
     onIdea = async (idTablero) => {
 
         const id = localStorage.getItem("id")
 
         await axios.get(`/api/idea/${id}/${idTablero}`).then(res => {
-            this.setState({ idea: res.data })
+
+            if (res.data.length > 0) {
+                
+                ideas.push(res.data)
+
+                this.setState({ idea : ideas})
+
+            }
+
+
+
         }
         )
             .catch(err => console.log("Into here"));
@@ -127,9 +143,7 @@ export class CrearTablero extends Component {
     async deleteIdea(event, idIdea) {
         event.preventDefault();
         await axios.delete(`/api/idea/${idIdea}`).then(res => {
-            this.props.tablero.map((e) => {
-                this.onIdea(e.id)
-            })
+            this.onLoadIdeas()
         }).catch(err => {
             console.log(err.response);
         })
@@ -202,14 +216,11 @@ export class CrearTablero extends Component {
         };
         const body = JSON.stringify({ comment: this.state.comment, state: true, usuario_fk: localStorage.getItem("id"), tablero_fk: this.state.idTablero })
 
-        console.log(body)
 
         axios.post(`/api/idea/`, body, config)
             .then(res => {
                 $('#modalCreateIdea').modal('hide');
-                this.props.tablero.map((e) => {
-                    this.onIdea(e.id)
-                })
+                this.onLoadIdeas()
             }).catch(err => console.log("Error"));
 
     }
@@ -235,16 +246,25 @@ export class CrearTablero extends Component {
                                             <div className="card-body">
                                                 <h5 className="card-title">{val.nombre}</h5>
                                                 <h6 className="card-subtitle mb-2 text-muted">{val.nick}</h6>
-                                                {this.state.idea.map((e, i) => {
-                                                    if (val.id == e.id_tablero) {
-                                                        return (
-                                                            <div key={i} className="mb-2 border p-2 d-flex justify-content-between ">
-                                                                <p className="card-text">{e.comment}</p>
-                                                                <a href="#" onClick={(event) => this.deleteIdea(event, e.id)} ><i className="fas fa-minus-circle text-danger" style={{ fontSize: 20 }}></i></a>
-                                                            </div>
-                                                        )
+                                                {this.state.idea.map((idea, i) => {
 
-                                                    }
+                                                    return idea.map((value, index) => {
+
+
+                                                        if (val.id == value.id_tablero) {
+
+                                                            return (
+                                                                <div key={index} className="mb-2 border p-2 d-flex justify-content-between ">
+                                                                    <p className="card-text">{value.comment}</p>
+                                                                    <a href="#" onClick={(event) => this.deleteIdea(event, value.id)} ><i className="fas fa-minus-circle text-danger" style={{ fontSize: 20 }}></i></a>
+                                                                </div>
+                                                            )
+
+                                                        }
+
+                                                    })
+
+
                                                 })}
                                                 <a href="#" onClick={(event) => this.nuevaIdea(event, val.id)} className="card-link" data-toggle="modal" data-target="#modalCreateIdea"><i className="fas fa-plus-circle pr-2"></i>Nueva idea</a>
                                                 <a href="#" onClick={(event) => this.deleteTablero(event, val.id)} className="card-link"><i className="fas fa-trash pr-2"></i> Eliminar</a>
